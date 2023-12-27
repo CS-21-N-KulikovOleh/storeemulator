@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>админ панель</title>
+
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+
+</head>
+<body>
+<div class="container mt-5">
+  <h2>админ панель</h2>
+  <hr>
+
+  <!-- кнопка категорий -->
+
+  <button class="btn btn-primary mb-3" onclick="loadAndDisplayCategories()">загрузка категорий</button>
+  <!-- перечень категорий -->
+
+
+
+  <ul id="categoryList" class="list-group"></ul>
+  <!-- добавить -->
+
+  <form class="mt-3">
+    <div class="form-group">
+      <label for="newCategory">новая категория</label>
+
+      <input type="text" class="form-control" id="newCategory" required placeholder="cоздайте категорию">
+    </div>
+
+
+    <button type="button" class="btn btn-success" onclick="addCategory()">добавить категорию</button>
+  </form>
+
+   <!-- добавление позиции -->
+
+   <form class="mt-5">
+    <div class="form-group">
+      <label for="productName">название</label>
+
+      <input type="text" class="form-control" id="productName" required placeholder="выберете название">
+    </div>
+    <div class="form-group">
+        <label for="productCategory">категория продукта</label>
+        <input type="text" class="form-control" id="productCategory" required>
+      </div>
+
+    <div class="form-group">
+      <label for="productImage">изображение</label>
+      <input type="file" class="form-control-file" id="productImage" accept="image/*" required>
+    </div>
+    <button type="button" class="btn btn-success" onclick="addProduct()">добавить продукт</button>
+  </form>
+
+  <!-- строка ввода -->
+
+  <div class="form-group">
+    <label for="selectedCategory">выбрать</label>
+    <input type="text" class="form-control" id="selectedCategory" placeholder="выбрать категорию">
+  </div>
+
+  <!-- загрузка продуктов -->
+
+  <button class="btn btn-primary" onclick="loadProductsByCategory()">загрузка продуктов</button>
+
+  <!-- список продуктов по категории -->
+
+  <ul id="productList" class="list-group mt-3"></ul>
+</div>
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script>
+    // загрузка категорий
+
+    function loadAndDisplayCategories() {
+
+      // ссылка для категории
+
+      const url = 'http://localhost:3000/categories';
+
+      fetch(url)
+        .then(response => response.json())
+        .then(categories => {
+
+          // очистка списка категорий
+
+          document.getElementById('categoryList').innerHTML = '';
+  
+          // заполнение списка категорий
+
+          const categorySelect = document.getElementById('productCategory');
+          categorySelect.innerHTML = '';
+          categories.forEach(category => {
+
+            
+            const option = document.createElement('option');
+            option.value = category.id;
+
+            option.textContent = category.name;
+            categorySelect.appendChild(option);
+
+
+          });
+          // добавить новые категории
+
+          categories.forEach(category => {
+            const li = document.createElement('li');
+            li.className = 'list-group-item';
+            li.textContent = category.name;
+            document.getElementById('categoryList').appendChild(li);
+          });
+        })
+        .catch(error => console.error('Error loading categories:', error));
+    }
+  
+    // загрузка категорий
+    function addCategory() {
+
+      // ссылка для категории
+
+      const url = 'http://localhost:3000/categories';
+      const newCategory = document.getElementById('newCategory').value;
+
+      fetch(url, {
+        method: 'POST',
+
+
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name: newCategory }),
+
+      })
+
+
+        .then(response => response.json())
+        .then(addedCategory => {
+
+          // отобраение категорий
+
+          loadAndDisplayCategories();
+
+  
+          // очистка строки ввода
+
+          document.getElementById('newCategory').value = '';
+        })
+        .catch(error => console.error('Error adding category:', error));
+    }
+// добавление позиции
+
+function addProduct() {
+  const url = 'http://localhost:3000/products';
+
+
+
+  const productName = document.getElementById('productName').value;
+  const productCategory = document.getElementById('productCategory').value;
+  const productImage = document.getElementById('productImage').files[0];
+
+  // передача изображения
+
+  const formData = new FormData();
+  formData.append('name', productName);
+  formData.append('category', productCategory);
+
+
+  if (productImage) {
+    formData.append('image', productImage);
+  }
+  fetch(url, {
+    method: 'POST',
+    body: formData,
+  })
+    .then(response => response.json())
+    .then(addedProduct => {
+      // добавление продукта
+
+      console.log('Product added successfully:', addedProduct);
+
+      // очистка строки
+
+      document.getElementById('productName').value = '';
+      document.getElementById('productCategory').value = '';
+      document.getElementById('productImage').value = '';
+    })
+    .catch(error => console.error('Error adding product:', error));
+}
+  </script>
+<script>
+  function loadProductsByCategory() {
+  const selectedCategory = document.getElementById('selectedCategory').value;
+  const url = `http://localhost:3000/products/category/${selectedCategory}`;
+  fetch(url)
+    .then(response => response.json())
+    .then(products => {
+
+      // очистка от продуктов
+
+      document.getElementById('productList').innerHTML = '';
+      console.log(products)
+
+      // добавляем продукты
+
+      products.forEach(product => {
+        const li = document.createElement('li');
+        li.className = 'list-group-item';
+        li.innerHTML = `
+          <h5>${product.name}</h5>
+          <p>Category: ${product.category}</p>
+        `;
+        if (product.image) {
+
+          // Создание изображения
+
+          const img = document.createElement('img');
+          img.src = `http://localhost:3000/images/${product.image}`;
+          img.alt = product.name;
+          img.style.maxWidth = '200px';
+          img.style.maxHeight = '200px';
+
+
+
+          li.appendChild(img);
+        }
+
+        // дбавление позиции
+
+        document.getElementById('productList').appendChild(li);
+      });
+    })
+    .catch(error => console.error('Error loading products by category:', error));
+}
+  </script>
+
+</body>
+
+
+
+</html>
